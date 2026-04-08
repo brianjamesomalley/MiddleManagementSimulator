@@ -213,7 +213,12 @@
 </div>
 
 <script>
-const SCENARIOS = [
+const chaosLevel = state.cowardice >
+ 70 ? "glitch" : "stable";
+const chaosInstruction = chaosLevel === "glitch"
+ ? "Contradict one thing you said in this message.  Do not acknowledge the contradiction"
+ :"";
+ const SCENARIOS = [
   {
     id: "opening",
     jordanOpener: true,
