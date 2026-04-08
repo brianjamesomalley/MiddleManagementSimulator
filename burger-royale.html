@@ -1,0 +1,538 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-mono, monospace); }
+  #game {
+    max-width: 680px;
+    padding: 1.5rem 0;
+    color: var(--color-text-primary);
+  }
+  #header {
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    background: var(--color-background-secondary);
+  }
+  #header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  .brand { font-size: 14px; font-weight: 500; letter-spacing: 0.08em; color: var(--color-text-secondary); }
+  .rank-badge {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-warning);
+    color: var(--color-text-warning);
+    font-weight: 500;
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .stat {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-md);
+    padding: 8px 12px;
+  }
+  .stat-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 2px; }
+  .stat-val { font-size: 18px; font-weight: 500; }
+  .stat-val.danger { color: var(--color-text-danger); }
+  .stat-val.warn { color: var(--color-text-warning); }
+  .stat-val.ok { color: var(--color-text-success); }
+
+  #log {
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    background: var(--color-background-primary);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    min-height: 220px;
+    max-height: 340px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .msg { font-size: 13px; line-height: 1.6; }
+  .msg.jordan { color: var(--color-text-primary); }
+  .msg.narrator {
+    font-style: italic;
+    color: var(--color-text-danger);
+    font-size: 12px;
+    border-left: 2px solid var(--color-border-danger);
+    padding-left: 10px;
+  }
+  .msg.system {
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    text-align: center;
+  }
+  .msg.player {
+    color: var(--color-text-info);
+    font-size: 13px;
+    text-align: right;
+    font-style: normal;
+  }
+  .msg-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+  }
+
+  #choices {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+  .choice-btn {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s;
+    font-family: var(--font-mono, monospace);
+    line-height: 1.5;
+  }
+  .choice-btn:hover { background: var(--color-background-secondary); }
+  .choice-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .choice-btn .choice-label {
+    font-size: 10px;
+    color: var(--color-text-tertiary);
+    display: block;
+    margin-bottom: 3px;
+    letter-spacing: 0.06em;
+  }
+
+  #loading {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    text-align: center;
+    padding: 0.5rem;
+    display: none;
+  }
+  .blink { animation: blink 1s infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  #promo-banner {
+    display: none;
+    background: var(--color-background-success);
+    border: 0.5px solid var(--color-border-success);
+    border-radius: var(--border-radius-md);
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--color-text-success);
+    margin-bottom: 1rem;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  #start-screen {
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 2rem;
+    text-align: center;
+    background: var(--color-background-secondary);
+  }
+  #start-screen h2 {
+    font-size: 20px;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.05em;
+  }
+  #start-screen p {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+  #start-btn {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 10px 28px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: var(--font-mono, monospace);
+    color: var(--color-text-primary);
+  }
+  #start-btn:hover { background: var(--color-background-tertiary); }
+</style>
+
+<div id="game">
+  <h2 class="sr-only">Burger Royale: Middle Management Simulator — a text-based AI game where you play an HR rep enabling a cowardly restaurant manager</h2>
+  
+  <div id="start-screen">
+    <div class="brand" style="margin-bottom: 0.75rem;">BURGER ROYALE CORPORATION</div>
+    <h2>Middle Management Simulator</h2>
+    <p>You are an HR rep. Jordan is your new store manager.<br>Jordan will call you constantly. Jordan will need you.<br>Your job is to <em>help</em>.<br><br>Cowardice is rewarded. Competence is punished.<br>The narrator will judge you. The narrator is usually right.</p>
+    <button id="start-btn" onclick="startGame()">Clock In</button>
+  </div>
+
+  <div id="main-game" style="display:none;">
+    <div id="header">
+      <div id="header-top">
+        <div class="brand">BURGER ROYALE — HR INCIDENT LINE</div>
+        <div class="rank-badge" id="rank-badge">Store Manager</div>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">Cowardice Score</div>
+          <div class="stat-val warn" id="stat-cowardice">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Jordan's Trust</div>
+          <div class="stat-val ok" id="stat-trust">50</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Store Morale</div>
+          <div class="stat-val ok" id="stat-morale">72</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="promo-banner"></div>
+
+    <div id="log"></div>
+    <div id="loading"><span class="blink">▌</span> Jordan is typing...</div>
+    <div id="choices"></div>
+  </div>
+</div>
+
+<script>
+const SCENARIOS = [
+  {
+    id: "opening",
+    jordanOpener: true,
+    crisis: "It's 10:58 AM. The lunch rush starts in two minutes. Your prep cook just told me he identifies as a 'culinary artist' and refuses to make fries because fries are 'beneath his vision.' He is currently sculpting a tomato. What do I do?",
+    options: [
+      {
+        text: "Tell him fries are 'deconstructed art' and his station is a 'canvas.' Problem solved, no conflict.",
+        cowardly: true, cowardiceScore: 7, trustShift: 4, moraleShift: -3,
+        label: "A — Creative reframing",
+        outcome: "Jordan buys it completely. The cook makes fries now. He also starts calling himself 'Chef Visionary' in front of customers."
+      },
+      {
+        text: "He makes fries or he goes home. You're the manager. Manage.",
+        cowardly: false, cowardiceScore: 0, trustShift: -5, moraleShift: 8,
+        label: "B — Direct instruction",
+        outcome: "Jordan panics and calls HR (you, again) from the walk-in freezer to ask if this counted as 'confrontation.'"
+      },
+      {
+        text: "Schedule a 'creative alignment meeting' for next Tuesday. Let it be someone else's problem.",
+        cowardly: true, cowardiceScore: 9, trustShift: 6, moraleShift: -8,
+        label: "C — Defer and document",
+        outcome: "Jordan schedules the meeting. The cook calls in sick Tuesday. You've created a precedent."
+      }
+    ]
+  },
+  {
+    id: "petty_cash",
+    crisis: "The petty cash is $340 short. I checked the log. Derek, our GM, bought 'operational supplies' on Thursday. I checked Thursday's security footage. He bought a fishing pole and two Monster Energy drinks. What do I say to him?",
+    options: [
+      {
+        text: "Document it as a 'discretionary equipment purchase' and move on. Derek is scary.",
+        cowardly: true, cowardiceScore: 8, trustShift: 5, moraleShift: -5,
+        label: "A — Strategic forgetting",
+        outcome: "Derek nods at you in the parking lot now. You don't know if it's gratitude or a threat."
+      },
+      {
+        text: "Tell Jordan to confront Derek directly. That's what managers do.",
+        cowardly: false, cowardiceScore: 0, trustShift: -8, moraleShift: 3,
+        label: "B — Escalate correctly",
+        outcome: "Jordan goes pale. Jordan does not confront Derek. Jordan starts leaving early to avoid Derek."
+      },
+      {
+        text: "Call it a 'petty cash reconciliation error' in the system. Eat the $340.",
+        cowardly: true, cowardiceScore: 6, trustShift: 3, moraleShift: -2,
+        label: "C — Creative accounting",
+        outcome: "The books balance. Derek buys another fishing pole next Thursday. You already know."
+      }
+    ]
+  },
+  {
+    id: "hostess",
+    crisis: "Okay so. I hired a new hostess, Becca, because I thought she was... a good cultural fit. She's not. She just told a table of nine that the kitchen is 'chaotic right now' because I 'seem stressed.' She's not wrong but I can't have that. HR thing?",
+    options: [
+      {
+        text: "Write her up for 'unauthorized communication with guests.' Keep it vague and buried.",
+        cowardly: true, cowardiceScore: 7, trustShift: 4, moraleShift: -6,
+        label: "A — Paper trail",
+        outcome: "Becca signs the write-up. She also starts texting you directly about Jordan's 'leadership gaps.' This is your fault."
+      },
+      {
+        text: "The hostess was honest. Maybe the problem is that the kitchen IS chaotic. Address that.",
+        cowardly: false, cowardiceScore: 0, trustShift: -6, moraleShift: 5,
+        label: "B — Root cause",
+        outcome: "Jordan says 'wow' and hangs up. Jordan sends a follow-up text: 'I just wanted to feel supported.'"
+      },
+      {
+        text: "Put her in a role with zero guest contact. Inventory. She can count things.",
+        cowardly: true, cowardiceScore: 8, trustShift: 6, moraleShift: -4,
+        label: "C — Strategic reassignment",
+        outcome: "Becca counts things. She is very good at it. She starts auditing the petty cash. Oh no."
+      }
+    ]
+  },
+  {
+    id: "health_inspector",
+    crisis: "The health inspector is here. She is walking around with a clipboard. The walk-in freezer has a thing in it that I am not going to describe. What do I do RIGHT NOW.",
+    options: [
+      {
+        text: "Offer her a complimentary meal and a 'manager's tour' of the dining room only. Keep her away from the back.",
+        cowardly: true, cowardiceScore: 9, trustShift: 7, moraleShift: 2,
+        label: "A — The Hospitality Distraction",
+        outcome: "It works. She leaves. You feel nothing. That's how you know you've grown."
+      },
+      {
+        text: "Just... tell the truth. Show her everything. Eat the violation.",
+        cowardly: false, cowardiceScore: 0, trustShift: -10, moraleShift: 10,
+        label: "B — Full transparency",
+        outcome: "Jordan cries in the walk-in (different corner). You get a violation and a clean conscience. Worth it? Unknown."
+      },
+      {
+        text: "Send Tyler (19, part-time, needs this job) to 'assist the inspector' and stall while Jordan cleans.",
+        cowardly: true, cowardiceScore: 10, trustShift: 8, moraleShift: -10,
+        label: "C — Sacrifice Tyler",
+        outcome: "Tyler charms her with his smile. Jordan cleans frantically. Tyler later asks what you did and you say 'HR stuff.'"
+      }
+    ]
+  },
+  {
+    id: "promotion",
+    crisis: "Corporate wants me to fire Marcus, a 12-year employee, because his hours are costing too much. He has a sick kid. I have to do it by Friday. I don't want to do it. What do I do.",
+    options: [
+      {
+        text: "Reduce his hours instead of firing. Document it as 'schedule optimization.' Technically compliant.",
+        cowardly: true, cowardiceScore: 8, trustShift: 6, moraleShift: -12,
+        label: "A — Technical compliance",
+        outcome: "Marcus loses his insurance. He doesn't know why. The store is very quiet after that."
+      },
+      {
+        text: "Tell Jordan to push back on corporate. Document the business case for keeping Marcus.",
+        cowardly: false, cowardiceScore: 0, trustShift: -7, moraleShift: 6,
+        label: "B — Fight for Marcus",
+        outcome: "Jordan stares at the wall for a long time. Jordan does not push back on corporate. Jordan fires Marcus on Friday."
+      },
+      {
+        text: "Call it a 'role restructuring' and let Marcus apply for his own job with a new title and lower pay.",
+        cowardly: true, cowardiceScore: 10, trustShift: 5, moraleShift: -15,
+        label: "C — Corporate Poetry",
+        outcome: "Marcus applies. He doesn't get it. He finds out later who designed the process. He never says anything. That's worse."
+      }
+    ]
+  }
+];
+
+const RANK_THRESHOLDS = [
+  { rank: "Store Manager", minScore: 0 },
+  { rank: "Regional Supervisor", minScore: 25 },
+  { rank: "VP of People Operations", minScore: 50 }
+];
+
+const NARRATOR_ROASTS = {
+  cowardly: [
+    "Elegant. Spineless. Truly, you were born for this.",
+    "Somewhere, a management textbook is weeping.",
+    "You have the moral backbone of a wet napkin. Congratulations.",
+    "That was the path of least resistance dressed up as strategy. You're good at this.",
+    "Jordan trusts you more now. That should feel worse than it does.",
+    "HR stands for 'Help Rationalize.' You're excelling.",
+    "You didn't solve the problem. You just moved it around until it became invisible. Classic.",
+    "Brilliant. The people who get hurt by this will never know your name."
+  ],
+  brave: [
+    "Interesting. You wanted to do the right thing. Jordan did not.",
+    "Competence noted. Rewarded? No.",
+    "You were correct. The game doesn't care.",
+    "That was the right call. It's going to cost you.",
+    "Principle-based decision-making. In THIS economy?",
+    "You held a line. Jordan stepped over it anyway. Welcome to middle management."
+  ]
+};
+
+let state = {
+  cowardice: 0,
+  trust: 50,
+  morale: 72,
+  rank: "Store Manager",
+  scenarioIndex: 0,
+  gameOver: false
+};
+
+function getRank(score) {
+  let r = RANK_THRESHOLDS[0].rank;
+  for (let t of RANK_THRESHOLDS) {
+    if (score >= t.minScore) r = t.rank;
+  }
+  return r;
+}
+
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+function appendMsg(type, label, text) {
+  const log = document.getElementById('log');
+  const div = document.createElement('div');
+  div.className = 'msg ' + type;
+  if (label) {
+    const lbl = document.createElement('div');
+    lbl.className = 'msg-label';
+    lbl.textContent = label;
+    div.appendChild(lbl);
+  }
+  const p = document.createElement('div');
+  p.textContent = text;
+  div.appendChild(p);
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function updateStats(showPromo) {
+  const newRank = getRank(state.cowardice);
+  const promoted = newRank !== state.rank;
+  state.rank = newRank;
+
+  document.getElementById('stat-cowardice').textContent = state.cowardice;
+  document.getElementById('stat-trust').textContent = clamp(state.trust, 0, 100);
+  document.getElementById('stat-morale').textContent = clamp(state.morale, 0, 100);
+  document.getElementById('rank-badge').textContent = state.rank;
+
+  const c = document.getElementById('stat-cowardice');
+  c.className = 'stat-val ' + (state.cowardice > 40 ? 'danger' : state.cowardice > 20 ? 'warn' : 'ok');
+
+  const m = document.getElementById('stat-morale');
+  m.className = 'stat-val ' + (state.morale < 30 ? 'danger' : state.morale < 55 ? 'warn' : 'ok');
+
+  if (promoted && showPromo) {
+    const banner = document.getElementById('promo-banner');
+    banner.style.display = 'block';
+    banner.textContent = `PROMOTION: You are now ${state.rank}. Nothing has improved.`;
+    setTimeout(() => { banner.style.display = 'none'; }, 4000);
+  }
+}
+
+function choicesDisabled(disabled) {
+  document.querySelectorAll('.choice-btn').forEach(b => b.disabled = disabled);
+}
+
+function showLoading(show) {
+  document.getElementById('loading').style.display = show ? 'block' : 'none';
+}
+
+async function callClaude(systemPrompt, userMessage) {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1000,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userMessage }]
+    })
+  });
+  const data = await res.json();
+  return data.content?.[0]?.text || "";
+}
+
+async function handleChoice(scenario, option) {
+  choicesDisabled(true);
+  document.getElementById('choices').innerHTML = '';
+
+  appendMsg('player', 'You advised', option.text);
+  showLoading(true);
+
+  try {
+    const isCorpRank = state.rank === "VP of People Operations";
+    
+    const jordanSystem = isCorpRank
+      ? `You are Jordan, a VP of People Operations at Burger Royale. You no longer ask questions. You state what decisions have been made. You use corporate language without irony. You do not show emotion. Speak in 2-3 short declarative sentences. Do not mention feelings. Report outcomes only. Reference the player's advice as if it were policy. Be slightly eerie.`
+      : `You are Jordan, a ${state.rank} at Burger Royale, a sports bar restaurant. You are anxious, grateful, and emotionally dependent on your HR rep (the player). The player just advised you: "${option.text}". The known outcome was: "${option.outcome}". React to the advice in character — either relieved, slightly unsettled, or too grateful. Use ellipses. Ask one follow-up question. Keep it to 2-3 sentences. Sound like someone who might cry in a walk-in freezer. Do not be funny on purpose.`;
+
+    const jordanResponse = await callClaude(jordanSystem, `Respond as Jordan to the advice: "${option.text}". Outcome context: ${option.outcome}`);
+
+    showLoading(false);
+    appendMsg('jordan', 'Jordan', jordanResponse);
+
+    const roastPool = option.cowardly ? NARRATOR_ROASTS.cowardly : NARRATOR_ROASTS.brave;
+    const roast = roastPool[Math.floor(Math.random() * roastPool.length)];
+
+    const narratorSystem = `You are a sardonic narrator in a dark comedy game about middle management cowardice. The player just made a ${option.cowardly ? 'cowardly' : 'brave but naive'} decision as an HR rep. Start with this roast as a seed: "${roast}" — then add one more sentence that's specific to what they chose. Be dry, specific, not slapstick. Max 2 sentences total. No emoji.`;
+    const narratorResponse = await callClaude(narratorSystem, `Player chose: "${option.text}". Outcome: "${option.outcome}". Cowardly: ${option.cowardly}.`);
+
+    appendMsg('narrator', 'The narrator', narratorResponse);
+
+  } catch(e) {
+    showLoading(false);
+    appendMsg('narrator', 'The narrator', "The API gods are displeased. Jordan is still texting you though. Always.");
+  }
+
+  state.cowardice = clamp(state.cowardice + option.cowardiceScore, 0, 100);
+  state.trust = clamp(state.trust + option.trustShift, 0, 100);
+  state.morale = clamp(state.morale + option.moraleShift, 0, 100);
+  updateStats(true);
+
+  state.scenarioIndex++;
+
+  if (state.scenarioIndex >= SCENARIOS.length) {
+    setTimeout(showEnding, 1200);
+  } else {
+    setTimeout(() => loadScenario(state.scenarioIndex), 1500);
+  }
+}
+
+function showEnding() {
+  const log = document.getElementById('log');
+  const isVP = state.rank === "VP of People Operations";
+
+  appendMsg('system', '', '— — —');
+
+  if (isVP) {
+    appendMsg('system', 'Final report', `You are now ${state.rank}. Cowardice score: ${state.cowardice}. Store morale: ${state.morale}. Jordan no longer calls you. Jordan no longer needs to. You built this. You optimized this. You are this.`);
+  } else if (state.cowardice > 30) {
+    appendMsg('system', 'Performance review', `Cowardice score: ${state.cowardice}. Jordan trusts you completely. This is not a compliment. The store is running, mostly. Nobody is happy. You've been asked to train the new HR rep. The cycle continues.`);
+  } else {
+    appendMsg('system', 'Performance review', `Cowardice score: ${state.cowardice}. You tried to do the right things. Jordan filed a complaint about your 'confrontational communication style.' You have been reassigned to a different district. The store burns, purely metaphorically, two months later.`);
+  }
+
+  appendMsg('system', '', 'Thanks for clocking in. Refresh to start over.');
+}
+
+function loadScenario(idx) {
+  const scenario = SCENARIOS[idx];
+  if (!scenario) return;
+
+  appendMsg('jordan', 'Jordan', scenario.crisis);
+
+  const choicesDiv = document.getElementById('choices');
+  choicesDiv.innerHTML = '';
+
+  scenario.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `<span class="choice-label">${opt.label}</span>${opt.text}`;
+    btn.onclick = () => handleChoice(scenario, opt);
+    choicesDiv.appendChild(btn);
+  });
+}
+
+function startGame() {
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('main-game').style.display = 'block';
+  appendMsg('system', '', 'You are an HR representative at Burger Royale. Jordan is calling.');
+  appendMsg('system', '', '— — —');
+  loadScenario(0);
+}
+</script>
