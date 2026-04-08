@@ -438,18 +438,50 @@ function showLoading(show) {
 }
 
 async function callClaude(systemPrompt, userMessage) {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1000,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userMessage }]
-    })
-  });
-  const data = await res.json();
-  return data.content?.[0]?.text || "";
+// Simulate network delay
+await new Promise(r => setTimeout(r, 800 + Math.random() * 700));
+
+const cowardice = state.cowardice;
+const rank = state.rank;
+const isCowardlyOption = userMessage.includes('cowardly') ||
+(systemPrompt.includes('spineless') && !systemPrompt.includes('brave'));
+
+// Jordan's voice degrades with cowardice score
+let jordanResponse = "";
+
+if (rank === "VP of People Operations" || cowardice > 60) {
+// Corporate hollow mode
+const hollowResponses = [
+"The decision has been operationalized. Outcomes will be measured. Further questions should be submitted in writing.",
+"Per the framework established last quarter, this falls within acceptable parameters. No further action required.",
+"I've documented the resolution in the incident tracker. The system will now close this ticket.",
+"That approach aligns with our stated values. I have no additional feedback at this time.",
+];
+jordanResponse = hollowResponses[Math.floor(Math.random() * hollowResponses.length)];
+}
+else if (cowardice > 30) {
+// Exhausted but still human
+const tiredResponses = [
+`Okay. I did what you said. It worked, I guess. I don't feel great about it but... the numbers look fine. Is that the whole thing? Just... make the numbers look fine?`,
+`I told Derek about the 'discretionary purchase' thing. He just... nodded. I think he knows I'm lying for him. That's worse than if he got mad.`,
+`Becca is doing inventory now. She's really good at it. She asked me why she got moved. I said 'cultural alignment.' She said 'okay.' She knows.`,
+`The health inspector left. Tyler is still talking to her in the parking lot. I don't know what to do with Tyler now. He thinks he's getting a raise.`,
+];
+jordanResponse = tiredResponses[Math.floor(Math.random() * tiredResponses.length)];
+}
+else {
+// Anxious new manager
+const anxiousResponses = [
+`I... I did it. I told him about the fries. He looked at me for like ten seconds and then just... started making fries. Is that good? Why did that work? I feel weird.`,
+`So I scheduled the meeting. For Tuesday. But he's not here Tuesday? So I have to... reschedule? Is that more meetings? I'm going to have so many meetings.`,
+`I wrote her up. She signed it. Then she asked if I wanted to get coffee sometime. What does that mean? Is she... am I in trouble? What do I do about THAT?`,
+`The walk-in thing is... handled. I'm not going to tell you how. Please don't ask. Just... the inspector didn't see it. That's what matters, right?`,
+];
+jordanResponse = anxiousResponses[Math.floor(Math.random() * anxiousResponses.length)];
+}
+
+// Narrator is separate - also mocked
+return jordanResponse;
 }
 
 async function handleChoice(scenario, option) {
